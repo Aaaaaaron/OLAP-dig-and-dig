@@ -171,7 +171,7 @@ object FileSourceStrategy extends Strategy with Logging {
   org.apache.spark.sql.execution.CodegenSupport#produce
   org.apache.spark.sql.execution.CodegenSupport#doProduce
 
-![](http://aron-blog-image.oss-cn-hangzhou.aliyuncs.com/18-8-19/37558220.jpg)
+![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-19/37558220.jpg)
 
 SparkPlan : base class for physical operators, The naming convention is that physical operators end with "Exec" suffix, e.g. ProjectExec.
 ```scala
