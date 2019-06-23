@@ -1,5 +1,5 @@
 ---
-title: 寻找 spark executor 日志
+title: 寻找 Spark executor 日志
 date: 2018-10-24 22:21:28
 tags:
   - Spark

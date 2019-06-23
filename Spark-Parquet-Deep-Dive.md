@@ -5,6 +5,8 @@ tags:
   - Spark
   - Parquet
   - BigData
+top: true
+
 ---
 ## 读取流程
 ### WholeStageCodegenExec
@@ -36,10 +38,12 @@ tags:
   }
 ```
 
-这里的其中`child.asInstanceOf[CodegenSupport].inputRDDs()` 最后会走到:`FileSourceScanExec#inputRDD`. 
+这里的其中`child.asInstanceOf[CodegenSupport].inputRDDs()` 处于所有的 exec 的最头部, 会沿着 exec 树一层层调用下去最后会走到:`FileSourceScanExec#inputRDD`, 如图:
+
+![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20181118165922.png)
 
 ### FileSourceScanExec
-inputRDD 首先会调用具体 `FileFormat` 实现类的 `buildReaderWithPartitionValues` ,对于这里是 `ParquetFileFormat`, build 出来一个 `readFunction : ((PartitionedFile) => Iterator[InternalRow])`
+inputRDD 首先会调用具体 `FileFormat` 实现类的 `buildReaderWithPartitionValues` ,对于这里是 `ParquetFileFormat`, build 出来一个 `readFunction : ((PartitionedFile) => Iterator[InternalRow])`, 顾名思义后面会用这个 func 来读取文件.
 
 下一步的 `createBucketedReadRDD` 我们之前的博客分析过( [Spark-Parquet-file-split](https://aaaaaaron.github.io/2018/10/22/Spark-Parquet-file-split) ), 主要是用来切分 partitions, 并且返回一个 FileScanRDD.
 
@@ -92,7 +96,6 @@ private def readCurrentFile(): Iterator[InternalRow] = {
   }
 
 org.apache.spark.SparkContext#runJob#    dagScheduler.runJob(rdd, cleanedFunc, partitions, callSite, resultHandler, localProperties.get)
-
 
 org.apache.spark.scheduler.DAGScheduler#runJob
     
