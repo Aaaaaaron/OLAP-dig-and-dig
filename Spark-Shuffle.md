@@ -1,7 +1,10 @@
 ---
-title: Shuffle
+title: Spark/MR Shuffle 对比
 date: 2018-10-24 14:09:16
-tags: BigData
+tags:
+  - Spark
+  - BigData
+  - MR
 ---
 # **Shuffle 过程介绍**
 
@@ -13,13 +16,13 @@ Shuffle 的本义是洗牌、混洗，把一组有一定规则的数据尽量转
 
 从 map 输出到 reduce 输入的整个过程可以广义地称为 shuffle。Shuffle 横跨 map 端和 reduce 端，在 map 端包括 spill 过程，在 reduce 端包括 copy 和 sort 过程，如图所示：
 
-![image001](http://data.qq.com/resource/imgcache/uploads/2014/07/image001.jpg)
+![image001](Spark-Shuffle/image001.jpg)
 
 ### Map Shuffle (Spill 过程)
 
 Spill 过程包括输出、排序、溢写、合并等步骤，如图所示：
 
-![image002](http://data.qq.com/resource/imgcache/uploads/2014/07/image002.png)
+![image002](Spark-Shuffle/image002.png)
 
 #### **Collect**
 
@@ -27,7 +30,7 @@ Spill 过程包括输出、排序、溢写、合并等步骤，如图所示：
 
 这个数据结构其实就是个字节数组，叫 kvbuffer，名如其义，但是这里面不光放置了 <key, value> 数据，还放置了一些索引数据，给放置索引数据的区域起了一个 kvmeta 的别名，在 kvbuffer 的一块区域上穿了一个 IntBuffer（字节序采用的是平台自身的字节序）的马甲。<key, value> 数据区域和索引数据区域在 kvbuffer 中是相邻不重叠的两个区域，用一个分界点来划分两者，分界点不是亘古不变的，而是每次 spill 之后都会更新一次。初始的分界点是 0，<key, value> 数据的存储方向是向上增长，索引数据的存储方向是向下增长，如图所示：
 
-![image003](http://data.qq.com/resource/imgcache/uploads/2014/07/image003.png)
+![image003](Spark-Shuffle/image003.png)
 
 Kvbuffer 的存放指针 bufindex 是一直闷着头地向上增长，比如 bufindex 初始值为 0，一个 Int 型的 key 写完之后，bufindex 增长为 4，一个 Int 型的 value 写完之后，bufindex 增长为 8。
 
@@ -51,11 +54,11 @@ Spill 线程为这次 spill 过程创建一个磁盘文件：从所有的本地�
 
 每一次 spill 过程就会最少生成一个 out 文件，有时还会生成 index 文件，spill 的次数也烙印在文件名中。索引文件和数据文件的对应关系如下图所示：
 
-![image004](http://data.qq.com/resource/imgcache/uploads/2014/07/image004.png)
+![image004](Spark-Shuffle/image004.png)
 
 话分两端，在 spill 线程如火如荼的进行 sortAndSpill 工作的同时，map 任务不会因此而停歇，而是一无既往地进行着数据输出。Map 还是把数据写到 kvbuffer 中，那问题就来了：<key, value> 只顾着闷头按照 bufindex 指针向上增长，kvmeta 只顾着按照 kvindex 向下增长，是保持指针起始位置不变继续跑呢，还是另谋它路？如果保持指针起始位置不变，很快 bufindex 和 kvindex 就碰头了，碰头之后再重新开始或者移动内存都比较麻烦，不可取。Map 取 kvbuffer 中剩余空间的中间位置，用这个位置设置为新的分界点，bufindex 指针移动到这个分界点，kvindex 移动到这个分界点的 - 16 位置，然后两者就可以和谐地按照自己既定的轨迹放置数据了，当 spill 完成，空间腾出之后，不需要做任何改动继续前进。分界点的转换如下图所示：
 
-![image005](http://data.qq.com/resource/imgcache/uploads/2014/07/image005.png)
+![image005](Spark-Shuffle/image005.png)
 
 Map 任务总要把输出的数据写到磁盘上，即使输出数据量很小在内存中全部能装得下，在最后也会把数据刷到磁盘上。
 
@@ -73,7 +76,7 @@ Merge 过程怎么知道产生的 spill 文件都在哪了呢？从所有的本�
 
 最终的索引数据仍然输出到 index 文件中。
 
-![image006](http://data.qq.com/resource/imgcache/uploads/2014/07/image006.png)
+![image006](Spark-Shuffle/image006.png)
 
 Map 端的 shuffle 过程到此结束。
 
@@ -104,11 +107,11 @@ Spark 中需要 shuffle 输出的 map 任务会为每个 reduce 创建对应的 
 
 Map 创建的 bucket 其实对应磁盘上的一个文件，map 的结果写到每个 bucket 中其实就是写到那个磁盘文件中，这个文件也被称为 blockFile，是 DiskBlockManager 管理器通过文件名的 hash 值对应到本地目录的子目录中创建的。每个 map 要在节点上创建 R 个磁盘文件用于结果输出，map 的结果是直接输出到磁盘文件上的，100KB 的内存缓冲是用来创建 FastBufferedOutputStream 输出流。这种方式一个问题就是 shuffle 文件过多。
 
-![image007](http://data.qq.com/resource/imgcache/uploads/2014/07/image007.png)
+![image007](Spark-Shuffle/image007.png)
 
 针对上述 shuffle 过程产生的文件过多问题，Spark 有另外一种改进的 shuffle 过程：consolidation shuffle，以期显著减少 shuffle 文件的数量。在 consolidation shuffle 中每个 bucket 并非对应一个文件，而是对应文件中的一个 segment 部分。Job 的 map 在某个节点上第一次执行，为每个 reduce 创建 bucket 对应的输出文件，把这些文件组织成 ShuffleFileGroup，当这次 map 执行完之后，这个 ShuffleFileGroup 可以释放为下次循环利用；当又有 map 在这个节点上执行时，不需要创建新的 bucket 文件，而是在上次的 ShuffleFileGroup 中取得已经创建的文件继续追加写一个 segment；当前次 map 还没执行完，ShuffleFileGroup 还没有释放，这时如果有新的 map 在这个节点上执行，无法循环利用这个 ShuffleFileGroup，而是只能创建新的 bucket 文件组成新的 ShuffleFileGroup 来写输出。
 
-![image008](http://data.qq.com/resource/imgcache/uploads/2014/07/image008.png)
+![image008](Spark-Shuffle/image008.png)
 
 比如一个 job 有 3 个 map 和 2 个 reduce：(1) 如果此时集群有 3 个节点有空槽，每个节点空闲了一个 core，则 3 个 map 会调度到这 3 个节点上执行，每个 map 都会创建 2 个 shuffle 文件，总共创建 6 个 shuffle 文件；(2) 如果此时集群有 2 个节点有空槽，每个节点空闲了一个 core，则 2 个 map 先调度到这 2 个节点上执行，每个 map 都会创建 2 个 shuffle 文件，然后其中一个节点执行完 map 之后又调度执行另一个 map，则这个 map 不会创建新的 shuffle 文件，而是把结果输出追加到之前 map 创建的 shuffle 文件中；总共创建 4 个 shuffle 文件；(3) 如果此时集群有 2 个节点有空槽，一个节点有 2 个空 core 一个节点有 1 个空 core，则一个节点调度 2 个 map 一个节点调度 1 个 map，调度 2 个 map 的节点上，一个 map 创建了 shuffle 文件，后面的 map 还是会创建新的 shuffle 文件，因为上一个 map 还正在写，它创建的 ShuffleFileGroup 还没有释放；总共创建 6 个 shuffle 文件。
 

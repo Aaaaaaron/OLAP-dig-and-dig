@@ -102,11 +102,11 @@ WHERE t2.c = 0
 
 原表:
 
-![image-20210414163537859](image-20210414163537859.png)
+![image-20210414163537859](Calcite-Not-in-opt/image-20210414163537859.png)
 
 经过两轮 join 之后的表(USERS.ID=JOBS.AGE):
 
-![image-20210414171920321](image-20210414171920321.png)
+![image-20210414171920321](Calcite-Not-in-opt/image-20210414171920321.png)
 
 ------
 
@@ -141,8 +141,8 @@ SQL 是个三值系统 TRUE/FALSE/UNKNOWN, 其中 NULL 和所有值比较都是 
 
 可以看到 jobs 插入了一个 users 不存在的值, 选出的结果会把 null 这行排除掉
 
-![image-20210414165506690](image-20210414165506690.png)
+![image-20210414165506690](Calcite-Not-in-opt/image-20210414165506690.png)
 
 但是有一种例外, 当 A not in B, B表是个空表时, 可以选出 A 表所有数据, 可以看到 null 这行数据选了出来
 
-![image-20210414165201722](image-20210414165201722.png)
+![image-20210414165201722](Calcite-Not-in-opt/image-20210414165201722.png)

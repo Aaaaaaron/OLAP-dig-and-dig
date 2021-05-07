@@ -41,7 +41,7 @@ Memo 中两个最基本的概念就是 Expression Group（简称 Group） 以及
 
 ### Init Memo
 
-![image-20200208221706543](image-20200208221706543.png)
+![image-20200208221706543](Calcite-Volcano-Planner/image-20200208221706543.png)
 
 一旦最初的计划复制到了MEMO结构中以后，就可以对逻辑操作符做一些转换以生成物理操作符。
 
@@ -56,11 +56,11 @@ Memo 中两个最基本的概念就是 Expression Group（简称 Group） 以及
 
 由于物理属性的不同，同一组中的某些操作符可作为孩子节点，而另外一些操作符则不能
 
-![image-20200208221734549](image-20200208221734549.png)
+![image-20200208221734549](Calcite-Volcano-Planner/image-20200208221734549.png)
 
 ### Find best plan
 
-![image-20200208221741219](image-20200208221741219.png)
+![image-20200208221741219](Calcite-Volcano-Planner/image-20200208221741219.png)
 
 **Ref:**
 
@@ -277,7 +277,7 @@ public static <T> Enumerable<T> asEnumerable(JavaRDD<T> rdd) {
 }
 ```
 
-![image-20200208225453064](image-20200208225453064-20210507205155192.png)
+![image-20200208225453064](Calcite-Volcano-Planner/image-20200208225453064-20210507205155192.png)
 
 ## 基本流程
 
@@ -589,7 +589,7 @@ public RelNode changeTraits(final RelNode rel, RelTraitSet toTraits) {
 
 在 changeTraits 里会创建一个新的 RelSubset(`rel#16:Subset#2.ENUMERABLE.[]`) 作为根节点(rootRel2), 但是两者还是同一个 RelSet (因为逻辑语义上没有变化)
 
-![image-20200130143902228](image-20200130143902228.png)
+![image-20200130143902228](Calcite-Volcano-Planner/image-20200130143902228.png)
 
 然后会再用这个 rootRel2 再 set 一次 root: `planner.setRoot(rootRel2);` 由于这次的根节点是 RelSubset, registerImpl 会走到 `registerSubset` 中去. 不过会直接返回出来.
 
@@ -800,7 +800,7 @@ class EnumerableProjectRule extends ConverterRule {
 
 在方法 `transformTo` 中可以看到 register 了这个新生成的物理算子(EnumerableProject): **volcanoPlanner.ensureRegistered(rel, rels[0], this)**, 这次第二个参数 equivRel 不是 null 了, 而是 `rels[0](LogicalProject)`. 在 VolcanoPlanner#register 中会拿到 equivRel 对应的 RelSet, 再走下去就又是上面的 `registerImpl`, 只不过这时候会有一个 set 传入.
 
-![image-20200130235141251](image-20200130235141251.png)
+![image-20200130235141251](Calcite-Volcano-Planner/image-20200130235141251.png)
 
 这样就把新生成的这个物理算子注册到了原来的 RelSet 树上, 完成了 transform 的过程.
 
@@ -812,11 +812,11 @@ OPTIMIZE Rule-match queued: rule [ProjectRemoveRule] rels [rel#19:EnumerableProj
 
 **Before**
 
-![image-20200208225742683](image-20200208225742683.png)
+![image-20200208225742683](Calcite-Volcano-Planner/image-20200208225742683.png)
 
 **After**
 
-![image-20200208225746328](image-20200208225746328.png)
+![image-20200208225746328](Calcite-Volcano-Planner/image-20200208225746328.png)
 
 #### ProjectRemoveRule
 
@@ -858,11 +858,11 @@ for (RelSubset otherSubset : otherSet.subsets) {
 
 **before**
 
-![image-20200131214015824](image-20200131214015824.png)
+![image-20200131214015824](Calcite-Volcano-Planner/image-20200131214015824.png)
 
 **after**
 
-![image-20200131214114884](image-20200131214114884.png)
+![image-20200131214114884](Calcite-Volcano-Planner/image-20200131214114884.png)
 
 ```
 Root: rel#18:Subset#1.ENUMERABLE.[]
@@ -915,7 +915,7 @@ Set#1, type: RecordType(INTEGER EMPNO, VARCHAR NAME, INTEGER DEPTNO, VARCHAR GEN
     rel#20:BindableTableScan.BINDABLE.[](table=[SALES, EMPS],filters=[=($1, 'John')]), rowcount=100.0, cumulative cost={0.5 rows, 0.505 cpu, 0.0 io}
 ```
 
-![image-20200131224924660](image-20200131224924660.png)
+![image-20200131224924660](Calcite-Volcano-Planner/image-20200131224924660.png)
 
 ### buildCheapestPlan
 

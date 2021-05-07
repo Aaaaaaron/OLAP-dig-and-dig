@@ -1,7 +1,6 @@
 ---
 title: Spark bucketing Deep Dive
-date: 2019-10-09 17:10:27
-top: true
+date: 2019-12-31 17:10:27
 tags:
   - Spark
   - BigData

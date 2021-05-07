@@ -16,9 +16,9 @@ Calcite 作为一个通用的 SQL 框架, 他出发点是希望能为不同计�
 1. schema 信息(通过 JDBC 的 Properties 传入)
 2. TableScan 如何读取数据(需要框架使用方自己实现, 后面讲代码生成时会提到)
 
-![image-20200207232940630](image-20200207232940630-20210507203629200.png)
+![image-20200207232940630](Kylin-query-process/image-20200207232940630-20210507203629200.png)
 
-![image-20200207232956828](image-20200207232956828-20210507203634094.png)
+![image-20200207232956828](Kylin-query-process/image-20200207232956828-20210507203634094.png)
 
 # 2.定义规则 Hook 到 Calcite
 
@@ -27,21 +27,21 @@ Kylin 使用上面注册进去的这些 Rule 把各个 Calcite 逻辑执行计�
 1. OLAPRel 也继承自RelNode(Calcite 的逻辑执行计划), 简单来说每个OLAP*Rel只是包了下 Calcite 的逻辑执行计划节点, 只是为了多加一些自己的抽象方法, 需要各个子类去实现, 后面会详细介绍
 2. 这些抽象方法是用来完成[查询信息收集/选 Cube/rewrite 执行计划/生成具体的物理执行计划]
 
-![image-20200207233022958](image-20200207233022958.png)
+![image-20200207233022958](Kylin-query-process/image-20200207233022958.png)
 
 1. 可以看到这个 Rule 当遇到 LogicalFilter 时, 会把它转换成 OLAPFilterRel, 他们都是 RelNode 的子类.
 
-![image-20200207233039360](image-20200207233039360.png)
+![image-20200207233039360](Kylin-query-process/image-20200207233039360.png)
 
 1. 这里有一个在 calcite 代码里 Hack 的点, 就是所有生成的查询计划树, 头结点一定会是 OLAPToEnumerableConverter, 如果不是, 会抛错.
 
-![image-20200207233054038](image-20200207233054038.png)
+![image-20200207233054038](Kylin-query-process/image-20200207233054038.png)
 
 这个是串起整个代码流程的关键位置, 下面会详细讲解:
 
 **OLAPToEnumerableConverter.implement**
 
-![image-20200207233114376](image-20200207233114376.png)
+![image-20200207233114376](Kylin-query-process/image-20200207233114376.png)
 
 # 3.切分 OLAPContext与选择 Cube
 
@@ -73,7 +73,7 @@ OLAPRel 接口有个方法: implementOLAP,之前通过 Rule 转化成的各种 O
 
 注意, case2 虽然有两个 OLAPContext, 但是左边那个 OLAPContext 无法对应一个 cube, 真正 cube 能加速的部分是右下角红色的那个OLAPContext, 同理 case3, 上面白色的两个算子都需要现算.
 
-![image-20200207233136751](image-20200207233136751.png)
+![image-20200207233136751](Kylin-query-process/image-20200207233136751.png)
 
 ## 3.2 选择 cube
 
@@ -117,7 +117,7 @@ EnumerableRel enumerable = impl.visitChild((OLAPRel) getInput());
 
 **OLAPSortRel#implementEnumerable**
 
-![image-20200207233214957](image-20200207233214957.png)
+![image-20200207233214957](Kylin-query-process/image-20200207233214957.png)
 
 **注意**
 
@@ -139,7 +139,7 @@ return impl.visitChild(this, 0, enumerable, pref);
 
 **EnumerableSort#implement**
 
-![image-20200207233235160](image-20200207233235160.png)
+![image-20200207233235160](Kylin-query-process/image-20200207233235160.png)
 
 上文提到使用 Calcite 框架, 需要注意的第二点: TableScan 如何读取数据 接下来介绍, 这个很重要:
 
@@ -149,7 +149,7 @@ return impl.visitChild(this, 0, enumerable, pref);
 
 **OLAPTableScan#implement**
 
-![image-20200207233314381](image-20200207233314381.png)
+![image-20200207233314381](Kylin-query-process/image-20200207233314381.png)
 
 我们只需要关注 execFunction, 这个是最后生产代码取数据会执行的函数, 如果击中cube, 会走到 executeOLAPQuery, 这个方法在:OLAPTable#executeOLAPQuery
 
