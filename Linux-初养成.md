@@ -157,6 +157,24 @@ rpm -e --nodeps xxx yyy zzz
 21. mount
 
 22. `find .-name *iso >/tmp/res.txt &`, 加&放到后台执行, `bg` 可以查看后台运行的任务, `fg  %进程id` 放到前台执行
+23. `find / -name zkCli.sh`: /opt/cloudera/parcels/CDH-5.11.2-1.cdh5.11.2.p0.4/lib/zookeeper/bin/zkCli.sh
+也可以在cdh的节点上, 直接 z 然后 tab, 会发现有 zookeeper-client 这样一个命令.
+
+![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/WeChatWorkScreenshot_9994c078-2f8a-40e8-9659-165afcde065d(1).png)
+
+24. 找某个目录下是否有包含某各类的 jar 包: `grep -r "SparkSession" jars`
+```shell
+$ grep -r "SparkSession" jars
+Binary file jars/spark-hive_2.11-2.2.1.jar matches
+Binary file jars/spark-sql_2.11-2.2.1.jar matches
+Binary file jars/hive-exec-1.2.1.spark2.jar matches
+Binary file jars/spark-repl_2.11-2.2.1.jar matches
+```
+
+25. `hadoop classpath`, `/var/log`, `/usr/hdp/2.4.0.0-169/`
+
+26. hive 默认 db 放的 HDFS 路径 `/user/hive/warehouse`, HIVE 查看表元数据: `desc formatted TEST_TIME`
+27. `./spark-shell --master yarn --executor-cores 5 --executor-memory 5g --num-executors 3`
 
 ## Java
 1. jstat -gc [pid] : 查看gc情况

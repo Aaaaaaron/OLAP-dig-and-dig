@@ -1,7 +1,6 @@
 ---
 title: Spark DateType/Timestamp cast 小结
-date: 2018-07-19 16:47:39
-top: true
+date: 2019-07-19 16:47:39
 tags:
   - Spark
   - BigData

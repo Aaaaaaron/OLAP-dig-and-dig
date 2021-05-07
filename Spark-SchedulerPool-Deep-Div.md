@@ -2,6 +2,8 @@
 title: Spark SchedulerPool Deep Dive
 date: 2019-01-13 11:35:42
 tags:
+hidden: true
+
 ---
 # 初始化
 在 `TaskSchedulerImpl` 的`initialize` 方法里 `schedulableBuilder.buildPools`初始化了 scheuler pool.其中有两种SchedulingMode[FIFO,FAIR]

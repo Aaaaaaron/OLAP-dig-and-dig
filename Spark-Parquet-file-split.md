@@ -1,7 +1,6 @@
 ---
 title: Spark Parquet file split
-date: 2018-10-22 20:14:43
-top: true
+date: 2019-10-30 20:14:43
 tags:
   - Spark
   - BigData
@@ -98,13 +97,15 @@ new FileScanRDD(fsRelation.sparkSession, readFile, partitions)
 
 在 步骤1 中根据文件大小均分了一些 partitions, 但不是所有这些 partitions 最后都会有数据. 
 
-接回 步骤2 中的 init, 在 `SpecificParquetRecordReaderBase#initialize` 中, 会在 `readFooter` 的时候传入一个 `RangeMetadataFilter`, 这个 filter 的range 是根据你的 split 的边界来的, 最后会用这个 range 来划定 row group 的归属:
+接回 步骤2 中的 init, 在 `SpecificParquetRecordReaderBase#initialize` 中, 会在 `readFooter` 的时候传入一个 `RangeMetadataFilter`, 这个 filter 的range 是根据你的 split 的边界来的, 最后会用这个 range 来划定 row group 的归属(footer.getBlocks()):
 
 ```java
 public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext)
     throws IOException, InterruptedException {
     ...
     footer = readFooter(configuration, file, range(inputSplit.getStart(), inputSplit.getEnd()));
+    FilterCompat.Filter filter = getFilter(configuration);
+    blocks = filterRowGroups(filter, footer.getBlocks(), fileSchema);
     ...
 }
 ```

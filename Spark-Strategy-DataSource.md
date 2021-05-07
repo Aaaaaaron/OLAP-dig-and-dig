@@ -4,6 +4,8 @@ date: 2018-08-12 22:32:25
 tags:
   - Spark
   - BigData
+hidden: true
+
 ---
 `DataFrameReader#format("json").load(paths : _*)` 返回一个 DataFrame, 我们来看看背后发生了什么事情.
 
