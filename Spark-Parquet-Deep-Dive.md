@@ -353,13 +353,13 @@ test("ColumnBatch") {
 
 ### ColumnVector
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-21/71064933.jpg)
+![](Spark-Parquet-Deep-Dive/71064933.jpg)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-21/4432890.jpg)
+![](Spark-Parquet-Deep-Dive/4432890.jpg)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-21/77850304.jpg)
+![](Spark-Parquet-Deep-Dive/77850304.jpg)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-21/54044866.jpg)
+![](Spark-Parquet-Deep-Dive/54044866.jpg)
 
 ```java
  * Capacity: The data stored is dense but the arrays are not fixed capacity. It is the

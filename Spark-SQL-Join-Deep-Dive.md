@@ -26,15 +26,15 @@ tags:
 ## 基本执行框架
 - 参与Join操作的两张表分别被称为流式表（StreamTable）和构建表（BuildTable）, 一般来说系统会默认将大表设定为流式表，将小表设定为构建表
 
-![Spark SQL 内核剖析](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190630105331.png)
+![Spark SQL 内核剖析](Spark-SQL-Join-Deep-Dive/20190630105331.png)
 
 ### 无 Shuffle 的 join
 #### BroadcastJoinExec
 通过将小表 broadcast 到每个 executor 节点上, 从而避免大表产生 shuffle.
 
-![Spark SQL 内核剖析](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190630164046.png)
+![Spark SQL 内核剖析](Spark-SQL-Join-Deep-Dive/20190630164046.png)
 
-![Spark SQL 内核剖析](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190630164058.png)
+![Spark SQL 内核剖析](Spark-SQL-Join-Deep-Dive/20190630164058.png)
 
 ##### 选择条件
 1. 首先看有没有 hints, 如果有 hints, 直接选用 BHJ
@@ -50,7 +50,7 @@ tags:
 2. 对每个分区的记录进行 join(有Hash/Sort 两种方式, 下面介绍).
 
 #### ShuffleHashJoinExec
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190630164357.png)
+![](Spark-SQL-Join-Deep-Dive/20190630164357.png)
 
 在 shuffle 过后, 对每个分区中的小表构造出一张 hash 表
 
@@ -64,13 +64,13 @@ tags:
 
 ##### 选择条件
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190805222307.png)
+![](Spark-SQL-Join-Deep-Dive/20190805222307.png)
 
 当两个表都较大时, 会选用这种 SMJ.
 
 # Spark Join Selection Code
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190805222901.png)
+![](Spark-SQL-Join-Deep-Dive/20190805222901.png)
 
 ```scala
     def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {

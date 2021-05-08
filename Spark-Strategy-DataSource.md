@@ -1,5 +1,5 @@
 ---
-title: 'Spark Strategy:DataSource'
+title: Spark Strategy:DataSource
 date: 2018-08-12 22:32:25
 tags:
   - Spark
@@ -164,8 +164,9 @@ object FileSourceStrategy extends Strategy with Logging {
   /**
    * Returns the result of this query as an RDD[InternalRow] by delegating to `doExecute` after preparations.
    * Concrete implementations of SparkPlan should override `doExecute`.
-   */
-  final def execute(): RDD[InternalRow] = executeQuery {
+      */
+    final def execute(): RDD[InternalRow] = executeQuery {
+
     doExecute()
   }
   org.apache.spark.sql.execution.WholeStageCodegenExec#doExecute
@@ -173,7 +174,7 @@ object FileSourceStrategy extends Strategy with Logging {
   org.apache.spark.sql.execution.CodegenSupport#produce
   org.apache.spark.sql.execution.CodegenSupport#doProduce
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-19/37558220.jpg)
+![](Spark-Strategy-DataSource/37558220.jpg)
 
 SparkPlan : base class for physical operators, The naming convention is that physical operators end with "Exec" suffix, e.g. ProjectExec.
 ```scala
@@ -411,5 +412,4 @@ trait CodegenSupport extends SparkPlan {
  */
 
 ```
-
 

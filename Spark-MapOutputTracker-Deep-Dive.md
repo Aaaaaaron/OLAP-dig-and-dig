@@ -67,8 +67,9 @@ java.lang.OutOfMemoryError: Java heap space
 
 查看 dump:
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191016230210.png)
+![](Spark-MapOutputTracker-Deep-Dive/20191016230210.png)
 
 
 ## 解决
-TODO
+社区已经 fix 了
+

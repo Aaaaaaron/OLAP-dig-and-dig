@@ -72,7 +72,7 @@ abstract class NarrowDependency[T](_rdd: RDD[T]) extends Dependency[T] {
 
 有两个实现类:OneToOneDependency/RangeDependency
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190127121445.png)
+![](Spark-Scheduler-Deep-Dive/20190127121445.png)
 
 ```scala
   override def getParents(partitionId: Int): List[Int] = List(partitionId)
@@ -80,7 +80,7 @@ abstract class NarrowDependency[T](_rdd: RDD[T]) extends Dependency[T] {
 
 可以看到, OneToOneDependency 子 RDD 分区与依赖的父 RDD 分区相同.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190127121500.png)
+![](Spark-Scheduler-Deep-Dive/20190127121500.png)
 ```scala
   override def getParents(partitionId: Int): List[Int] = {
     if (partitionId >= outStart && partitionId < outStart + length) {
@@ -96,7 +96,7 @@ RDD与上游RDD的分区如果不是一对一的关系，或者RDD的分区依�
 `  override def rdd: RDD[Product2[K, V]] = _rdd.asInstanceOf[RDD[Product2[K, V]]]` 可以看到这边返回的 RDD 是RDD[Product2[K, V].
 
 ## Partitioner
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190127153603.png)
+![](Spark-Scheduler-Deep-Dive/20190127153603.png)
 
 ```scala
 /**
@@ -121,9 +121,10 @@ abstract class Partitioner extends Serializable {
 ```
 
 一个上下游 RDD 的 partitions 数量都是定的().
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190127154456.png)
+![](Spark-Scheduler-Deep-Dive/20190127154456.png)
 
 ## Stage
+
 ```scala
 /**
  * A stage is a set of parallel tasks all computing the same function that need to run as part

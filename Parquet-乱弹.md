@@ -7,11 +7,11 @@ hidden: true
 
 http://lvheyang.com/wp-content/uploads/2016/02/%E5%88%97%E5%BC%8F%E5%AD%98%E5%82%A8%E4%B8%8EParquet%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%E5%88%86%E4%BA%AB.pdf
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190509164025.png)
+![](Parquet-乱弹/20190509164025.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190509165611.png)
+![](Parquet-乱弹/20190509165611.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190509170805.png)
+![](Parquet-乱弹/20190509170805.png)
 
 ***
 recommended to set the parquet block size to match the MFS chunk size for optimal performance.  The default MFS chunk size is 256 MB. 
@@ -37,7 +37,7 @@ usage: parquet-tools merge [option...] <input> [<input> ...] <output>
 
 ***
 for spark:
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190509182510.png)
+![](Parquet-乱弹/20190509182510.png)
 
 
 ```java
@@ -209,23 +209,23 @@ int numValues = dataPageHeader.getNum_values();
 # 读
 
 ## 原生 parquet
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528104542.png)
+![](Parquet-乱弹/20190528104542.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528104910.png)
+![](Parquet-乱弹/20190528104910.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528105205.png)
+![](Parquet-乱弹/20190528105205.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528105231.png)
+![](Parquet-乱弹/20190528105231.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528105342.png)
+![](Parquet-乱弹/20190528105342.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528105441.png)
+![](Parquet-乱弹/20190528105441.png)
 
 ***
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528103634.png)
+![](Parquet-乱弹/20190528103634.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528103701.png)
+![](Parquet-乱弹/20190528103701.png)
 
 ColumnChunkPageReadStore(RowGroupImpl)
 ```scala
@@ -325,19 +325,19 @@ ColumnChunkPageReadStore(RowGroupImpl)
 
 ## spark
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528110659.png)
+![](Parquet-乱弹/20190528110659.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528110909.png)
+![](Parquet-乱弹/20190528110909.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528111155.png)
+![](Parquet-乱弹/20190528111155.png)
 
 **spark 读的调用栈**
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528103907.png)
+![](Parquet-乱弹/20190528103907.png)
 
 **Vectorized read**
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528103951.png)
+![](Parquet-乱弹/20190528103951.png)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20190528104202.png)
+![](Parquet-乱弹/20190528104202.png)
 
 ## code
 

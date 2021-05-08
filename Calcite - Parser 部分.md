@@ -351,11 +351,9 @@ graph LR;
 ```
 
 - SqlNode: 抽象语法树(AST), 树状结构.
-  - ![image-20200112112033715](Calcite 01.assets/image-20200112112033715.png)
 - RelNode: 逻辑执行计划节点, 如TableScan, Project, Sort, Join等, 树状结构.
   - 继承自 RelOptNode, 代表能被优化器进行优化
     - `RelTraitSet#getTraitSet();`用来定义逻辑表的物理相关属性(分布/排序)
-  - ![image-20200112112335849](Calcite 01.assets/image-20200112112335849.png)
 
 ## SQL 解析阶段（SQL–>SqlNode）
 

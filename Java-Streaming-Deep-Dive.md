@@ -154,4 +154,4 @@ deleteOnExit 不一定会成功 如果文件有流还没关闭.
 
 FileInputStream 类都是操作一个文件的接口，注意到在创建一个 FileInputStream 对象时，会创建一个 FileDescriptor 对象，其实这个对象就是真正代表一个存在的文件对象的描述，当我们在操作一个文件对象时可以通过 getFD() 方法获取真正操作的与底层操作系统关联的文件描述。例如可以调用 FileDescriptor.sync() 方法将操作系统缓存中的数据强制刷新到物理磁盘中。
 
-![](https://www.ibm.com/developerworks/cn/java/j-lo-javaio/image015.jpg)
+![](Java-Streaming-Deep-Dive/image015-20210508110323870.jpg)

@@ -81,11 +81,11 @@ val withProjections = if (projects == withFilter.output) {
 
 负责数据文件扫描的 spark plan 是 `FileSourceScanExec`, 借一张图来简要说明怎么会走到这个 Exec.
 
-![Spark SQL 内核剖析](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/00014.jpeg)
+<img src="Spark-Read-Deep-Dive/00014.jpeg" alt="Spark SQL 内核剖析" style="zoom:67%;" />
 
 从图中可以看到, 从 SQL 生成了一颗逻辑执行计划树. 每个逻辑执行计划的节点都会转换成对应的一个物理执行计划(也是一颗树状结构). 
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20181118165922.png)
+<img src="Spark-Read-Deep-Dive/20181118165922.png" style="zoom: 50%;" />
 
 由于 Spark 会使用 Codegen,  `WholeStageCodegenExec` 是所有 Exec 的入口点. `child.asInstanceOf[CodegenSupport].inputRDDs()` 处于所有的 exec 的最头部, 会沿着 exec 树一层层调用下去最后会走到:`FileSourceScanExec#inputRDD`, 如图:
 
@@ -215,5 +215,4 @@ scan_mutableStateArray_0[0].hasNext() 调用到了 rdd 的 iter
 ##### getCurrentValue
 
 ##### checkEndOfRowGroup
-
 

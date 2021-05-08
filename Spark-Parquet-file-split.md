@@ -7,7 +7,7 @@ tags:
 
 ---
 ### 问题
-在实际使用 Spark + Parquet 的时候, 遇到了两个不解的地方:
+在实际使用 Spark + Parquet 的时候, 遇到了两个**不解**的地方:
 1. 我们只有一个 Parquet 文件(小于 HDFS block size), 但是 Spark 在某个 stage 生成了4个 tasks 来处理.
 2. 4个 tasks 中只有一个 task 处理了所有数据, 其他几个都没有在处理数据.
 
@@ -19,7 +19,7 @@ tags:
 
 ### 处理流程
 #### 1. 根据 Parquet 按文件大小切块生成 partitions:
- 
+
 在 `FileSourceScanExec#createNonBucketedReadRDD` 中, 如果文件是 splitable 的, 会按照 maxSplitBytes 把文件切分, 最后生成的数量, 就是 RDD partition 的数量, 这个解释了**不解1**, 代码如下:
 
 ```scala

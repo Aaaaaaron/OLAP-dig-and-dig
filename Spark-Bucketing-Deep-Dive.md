@@ -188,10 +188,12 @@ Bucket 还有一个很大的用处是可以用来做 Bucket Join, 这也是我�
 ### 例子一
 这个是最简单一个例子, 两个表直接 join, 无子查询.
 #### 优化前
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/企业微信截图_78b48f23-6c82-4db0-9237-ecfcadbe8248.png)
+
+<img src="Spark-Bucketing-Deep-Dive/78b48f23-6c82-4db0-9237-ecfcadbe8248-20210508113716354.png" alt="img" style="zoom:50%;" />
 
 #### 优化后
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191019131517.png)
+
+<img src="Spark-Bucketing-Deep-Dive/20191019131517-20210508113251983.png" style="zoom:50%;" />
 
 可以见到, 由于是一个 SMJ, 而我们的源表又没有任何处理, 所以 Spark 自动给执行计划上加上了几个 exchange(shuffle) 和 sort, 对大数据有点了解的同学都知道, 这两步操作会十分的耗费时间与资源. 而要是启用了 Bucket Join 之后, 执行计划图会变成什么样呢? 可以见下图, 可以见之前的 exchange 和 sort 都没有了, 整体 query 时间从 40s+ 下降到 5s(图一到图三).
 
@@ -209,16 +211,18 @@ GROUP BY t1.lstg_format_name
 ```
 
 #### 优化前
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191019201545.png)
+<img src="Spark-Bucketing-Deep-Dive/20191019201545-20210508113430256.png" style="zoom:50%;" />
 
 #### 优化后
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/企业微信截图_2d709ebe-ee49-495a-8971-c8cf988cabf2.png)
+
+<img src="Spark-Bucketing-Deep-Dive/2d709ebe-ee49-495a-8971-c8cf988cabf2-20210508114216719.png" alt="img" style="zoom:50%;" />
 
 有意思的是, 去掉最后一个 group by, 执行图会变成这样, 这个就留给读者朋友们自己去想了.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191019202151.png)
+<img src="Spark-Bucketing-Deep-Dive/20191019202151-20210508114058946.png" alt="img" style="zoom:50%;" />
 
 ### 3.2 原理说明
+
 我们先来看下 SMJ 的原理:
 1. 为了让两条记录能连接到一起, 需要将具有相同 key 的记录分发到同一个分区, 这一步会导致 shuffle(Exchange).
 2. 分别对两个表中每个分区里的数据按照 key 进行 sort(SortExec), 然后后续做 merge sort 操作, 这样就可以不用像 HashJoin 需要把所有数据都拉到内存中.
@@ -318,6 +322,6 @@ operator.withNewChildren(children)
 # 写入 debug 截图
 TBD, 后面写个文章介绍
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191018084225.png)
+<img src="Spark-Bucketing-Deep-Dive/20191018084225-20210508113437602.png" style="zoom:50%;" />
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20191018084345.png)
+<img src="Spark-Bucketing-Deep-Dive/20191018084345-20210508113440064.png" style="zoom: 37%;" />

@@ -2,6 +2,9 @@
 title: 'Hadoop MR 和 Spark 对比'
 date: 2018-11-02 15:21:13
 tags:
+  - MR
+  - Spark
+  - BigData
 ---
 ### 0. 启动开销
 总结: Spark 计算比 MapReduce 快的根本原因在于DAG计算模型, 但 MR 真正的缺点是抽象层次太低, 大量底层逻辑需要开发者手工完成. 但是也不是说 MR 就已经没用了, 没有最好的技术, 只有合适你需求的技术.

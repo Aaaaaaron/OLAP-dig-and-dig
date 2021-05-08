@@ -11,7 +11,7 @@ tags:
 
 Spark SQL 和 Catalyst 分别对应了 SQL 执行期以及解析期的优化工作，因此 Catalyst 的理解是 Spark SQL 的第一步。在一些 Catalyst 的介绍以及讲座中，下面一张图是必出现，它描述了从 SQL 语句到最后执行 Plan 的生成过程中，除了 Spark SQL，其他 SQL 引擎的工作原理也基本一致，比如 Hive 之类的。
 
-![](https://databricks.com/wp-content/uploads/2016/06/Catalyst-Optimizer-diagram.png)
+![](Spark-Catalyst-Deep-Dive/Catalyst-Optimizer-diagram.png)
 
 本文核心也是介绍 Catalyst 内部的实现，但是不是按照这张图的步骤来介绍 Catalyst 的实现原理，而是按照 SQL 给人最直接几个概念，比如 Row，Expression，Plan 来逐步介绍它们的内部实现。
 
@@ -93,32 +93,32 @@ def toRow(t: T): InternalRow = try {
 
 ### Expression 大体归类
 
-| Name      |归类|    功能描述|
-|--------   |---|   --------|
-|数据输入：  | |Expression 为 Tree 结构，中间节点都为加工类型表单，而叶子节点即为数据产生节点
-|Attribute| |Catalyst 里面最为重要的概念，可以理解为表的属性，在 sql 处理各个阶段会有不同的形态，比如 UnresolvedAttribute->AttributeReference->BoundReference，后面会具体分析|
-|Literal| |常量，支持各种类型的常量输入|
-|datetimeExpressions| |返回当前时间类型的常量，`CurrentDate`,`CurrentTimestamp`|
-|randomExpressions| |支持生成一些随机数|
-|其他一些输入| |比如获取 sql 计算过程中的任务对应的 InputFileName，SparkPartitionID|
-| 基本计算功能：  |||
-| arithmetic |nullSafeEval |数学 Expression，支持`-`,`+`,`abs`, `+`,`-`,`*`,`/`,`%`,`max`,`min`,`pmod`数学运算符|
-|bitwiseExpressions|nullSafeEval|位运算数，支持 IntegralType 类型的`and`,`or`,`not`,`xor`位运算|
-|mathExpressions|nullSafeEval|数学函数，支持`cos`,`Sqrt`之类 30 多种,相当于 Math 包|
-|stringExpressions|nullSafeEval|字符串函数，支持`Substring`,`Length`之类 30 多种，相当于 String 包|
-|decimalExpressions|nullSafeEval|Decimal 类型的支持，支持`Unscaled`,`MakeDecimal`操作|
-|datetimeExpressions|nullSafeEval|时间类型的运算|
-|collectionOperations|nullSafeEval|容器的操作，支持容器`Contains`,`Sort`,`Size`三种操作|
-|cast|nullSafeEval|支持数据类型的转换|
-|misc|nullSafeEval|功能函数包，支持 MD5，crc32 之类的函数功能|
-| 基本逻辑计算功能：  |||
-| predicates  |eval/nullSafeEval 类型|支持子 Expression 之间的逻辑运算，比如`AND`,`In`,`Or`，输出 Bool 类型|
-|regexpExpressions|nullSafeEval|支持 LIKE 相关操作|
-|conditionalExpressions|eval|支持 case，if，great，least 四种逻辑判断运算|
-|nullExpressions|eval/RuntimeReplaceable|与 NULL/NA 相关的判断或者 IF 判断功能，大部分都为 RuntimeReplaceable，会被进行优化处理|
-| 其他类型：  |||
-|complexTypeCreator|eval|SparkSql 是支持复杂数据结构，比如 Array，Map，Struct，这类 Expression 支持在 sql 语句上生成它们，比如 select array|
-|Generator|eval|支持 flatmap 类似的操作，即将 Row 转变为多个 Row，支持 Explode 和自定义 UserDefinedGenerator 两种，其中 Explode 支持将数组和 map 拆开为多个 Row。|
+| Name                   | 归类                    | 功能描述                                                     |
+| ---------------------- | ----------------------- | ------------------------------------------------------------ |
+| Expression             |                         | Expression为Tree结构，中间节点都为加工类型表单，而叶子节点即为数据产生节点 |
+| Attribute              |                         | Catalyst里面最为重要的概念，可以理解为表的属性，在sql处理各个阶段会有不同的形态，比如UnresolvedAttribute->AttributeReference->BoundReference，后面会具体分析 |
+| Literal                |                         | 常量，支持各种类型的常量输入                                 |
+| datetimeExpressions    |                         | 返回当前时间类型的常量，`CurrentDate`,`CurrentTimestamp`     |
+| randomExpressions      |                         | 支持生成一些随机数                                           |
+| 其他一些输入           |                         | 比如获取sql计算过程中的任务对应的InputFileName，SparkPartitionID |
+| 基本计算功能：         |                         |                                                              |
+| arithmetic             | nullSafeEval            | 数学Expression，支持`-`,`+`,`abs`, `+`,`-`,`*`,`/`,`%`,`max`,`min`,`pmod`数学运算符 |
+| bitwiseExpressions     | nullSafeEval            | 位运算数，支持IntegralType类型的`and`,`or`,`not`,`xor`位运算 |
+| mathExpressions        | nullSafeEval            | 数学函数，支持`cos`,`Sqrt`之类30多种,相当于Math包            |
+| stringExpressions      | nullSafeEval            | 字符串函数，支持`Substring`,`Length`之类30多种，相当于String包 |
+| decimalExpressions     | nullSafeEval            | Decimal类型的支持，支持`Unscaled`,`MakeDecimal`操作          |
+| datetimeExpressions    | nullSafeEval            | 时间类型的运算                                               |
+| collectionOperations   | nullSafeEval            | 容器的操作，支持容器`Contains`,`Sort`,`Size`三种操作         |
+| cast                   | nullSafeEval            | 支持数据类型的转换                                           |
+| misc                   | nullSafeEval            | 功能函数包，支持MD5，crc32之类的函数功能                     |
+| 基本逻辑计算功能：     |                         |                                                              |
+| predicates             | eval/nullSafeEval类型   | 支持子Expression之间的逻辑运算，比如`AND`,`In`,`Or`，输出Bool类型 |
+| regexpExpressions      | nullSafeEval            | 支持LIKE相关操作                                             |
+| conditionalExpressions | eval                    | 支持case，if，great，least四种逻辑判断运算                   |
+| nullExpressions        | eval/RuntimeReplaceable | 与NULL/NA相关的判断或者IF判断功能，大部分都为RuntimeReplaceable，会被进行优化处理 |
+| 其他类型：             |                         |                                                              |
+| complexTypeCreator     | eval                    | SparkSql是支持复杂数据结构，比如Array，Map，Struct，这类Expression支持在sql语句上生成它们，比如select array |
+| Generator              | eval                    | 支持flatmap类似的操作，即将Row转变为多个Row，支持Explode和自定义UserDefinedGenerator两种，其中Explode支持将数组和map拆开为多个Row。 |
 
 ### 2.1 Attribute 详解
 Attribute 直译为属性，在 SQL 中，可以简单理解为输入的 Table 中的字段，Attribute 通过 Name 字段来进行命名。SQL 语句通过 Parse 生成 AST 以后，SQL 语句中的每个字段都会解析为 UnresolvedAttribute，它是属于 Attribute 的一个子类，比如`SELECT a`中的`a`就表示为`UnresolvedAttribute("a")`，还有一个特殊的 UnresolvedAttribute，既为 SQL 语句中的`＊`，它表示为`Star`，属于 UnresolvedAttribute 类型的子类。
@@ -170,7 +170,7 @@ Expression 层面的 Codegen 的实现其实很简单，这里就是不详细去
 
 `Plan`表现形式也是 Tree，节点之间的关系可以理解为一种操作次序，比如 Plan 叶子节点表示从磁盘读取 DB 文件，而 Root 节点表示最终数据的输出；下面是`Plan`最常见的实例截图。
 
-![Alt text](../image/project.png)
+![Alt text](Spark-Catalyst-Deep-Dive/project-20210508110606340.png)
 
 用 SQL 语句来表示这个 Plan 即为:`SELECT project FROM table, table WHERE filter`。
 

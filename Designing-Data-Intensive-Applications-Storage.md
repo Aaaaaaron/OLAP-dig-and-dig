@@ -1,7 +1,9 @@
 ---
 title: Designing Data-Intensive Applications(Storage)
 date: 2018-08-26 19:30:40
-tags: BigData
+tags: 
+  - BigData
+  - DDIA
 ---
 # Index 基础
 log:泛指 append only 的记录序列.不一定要人可读, 可以是 binary 的.
@@ -15,17 +17,18 @@ index 的也就是存出一些额外的信息, 这样的话帮助你定位到你
 ## Hash Index
 要找 key 为123456的 content, 只需要先在内存 map 中找到它的 byte offset , 只要一次 seek 过去,读到和下一个 key 的 offset相减的 content. 读的很精准.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/893370.jpg)
+![](Designing-Data-Intensive-Applications-Storage/893370.jpg)
 > Storing a log of key-value pairs in a CSV-like format, indexed with an in-memory hash map.
 
 
 通过追加的方式, 可能会造成一个文件太大了, 解决方案是把当 log 到一定 size, 就拆分一个新 segment 文件. 后面我们可以对这些 segments 进行 compaction. compact 会去除 dup 的 key, 留下最新的版本.
 
 还可以对多个 seg 进行 merge.
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/39145451.jpg)
+![](Designing-Data-Intensive-Applications-Storage/39145451.jpg)
+
 >对一个 seg 进行 compact
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/13193271.jpg)
+![](Designing-Data-Intensive-Applications-Storage/13193271.jpg)
 >对 seg 进行 compact, 同时进行 merge.
 
 ### 局限
@@ -37,7 +40,7 @@ index 的也就是存出一些额外的信息, 这样的话帮助你定位到你
 
 ### 优势
 1. 可以 merge 比内存还大的多的 seg(使用 merge sort), 对于多个 seg 中都出现的值, 只需要留最新的 seg 中的值就可以了.
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/65990847.jpg)
+![](Designing-Data-Intensive-Applications-Storage/65990847.jpg)
 
 2. index 不用保留所有的 key, 因为你所有的 key 都是保序的, 所以只要有几个作为base, 其他的可以在这几个 base 之间去找. 假设你正在内存中寻找键 handiwork，但是你不知道段文件中该关键字的确切偏移量. 然而，你知道 handbag 和 handsome 的偏移，而且由于排序特性，你知道 handiwork 必须出现在这两者之间. 这意味着您可以跳到 handbag 的偏移位置并从那里扫描，直到您找到 handiwork(或没找到，如果该文件中没有该键)
 
@@ -45,7 +48,7 @@ index 的也就是存出一些额外的信息, 这样的话帮助你定位到你
 
 如果所有的 k-v 都是 fix length 的, 你可以用 binary search. 这样可以省去整个内存中的索引.不过 in practice 一般都是变长的.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/28391204.jpg)
+![](Designing-Data-Intensive-Applications-Storage/28391204.jpg)
 
 ### 维护和构建 SSTables
 在磁盘上维护一个有序的数据结构是可能的(见 B Tree), 但是在内存中维护会更加简单.类似的结构有 red-black trees, AVL tress.
@@ -76,7 +79,7 @@ index 的也就是存出一些额外的信息, 这样的话帮助你定位到你
 每个页面都可以使用地址或位置来标识, 这允许一个页面引用另一个页面 —— 类似于指针, 但在磁盘而不是在内存中. 我们可以使用这些页面引用来构建一个页面树.
 
 我们要找251, 于是在[200, 300] 中间找
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/89272936.jpg)
+![](Designing-Data-Intensive-Applications-Storage/89272936.jpg)
 
 在 B 树的一个页面中对子页面的引用的数量称为分支因子, 在上面图中, 分支因子是6. 在实践中, 分支因子取决于存储页面参考和范围边界所需的空间量, 但通常是几百个
 
@@ -84,7 +87,7 @@ index 的也就是存出一些额外的信息, 这样的话帮助你定位到你
 
 该算法确保树保持平衡:具有 n 个键的 B 树总是具有 O(log n)的深度.大多数数据库可以放入一个三到四层的 B 树, 所以你不需要遵追踪多页面引用来找到你正在查找的页面. 分支因子为 500 的 4KB 页面的四级树可以存储多达 256TB.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-8-24/30223544.jpg)
+![](Designing-Data-Intensive-Applications-Storage/30223544.jpg)
 
 B 树的基本底层写操作是用新数据覆盖磁盘上的页面, 但是引用不变, 这个和 LSM Tree 正好相反(只附加, 从不修改文件).
 
@@ -112,7 +115,7 @@ B 树的基本底层写操作是用新数据覆盖磁盘上的页面, 但是引�
 
 # 列存储
 如果一列的值, count 很大, 但是基数不大, 可以使用 bit map. 可以很高效的压缩.
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-9-1/37827590.jpg)
+![](Designing-Data-Intensive-Applications-Storage/37827590.jpg)
 
 ## vectorized process
 除了减少需要从磁盘加载的数据量以外, 面向列的存储布局也可以有效利用 CPU 周期. 例如 query engine 可以把一块(chunk) 的  compressed column data(为了单位信息密度更大) 放到 CPU 的 L1 cache. 前面说的按位与/或可以直接 apply 到这些 chunk 上.

@@ -27,24 +27,23 @@ tags:
 
 parquet-column 里会 shade 一个 fasttuil, 你 jar -tf parquet-column.jar 看他 里面会有这个 fastutil.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-11-8/50973815.jpg)
+![](Maven-打包趟坑与解法/50973815.jpg)
 
 可以看到有两个 jar 包, 一个 origin 不带 shade 的 fastutil, 另外一个是带着的, 也是放到 maven 仓库的 jar 包.
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-11-8/29736635.jpg)
+![](Maven-打包趟坑与解法/29736635.jpg)
 
 jar -tf 确认
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-11-8/57385130.jpg)
+![](Maven-打包趟坑与解法/57385130.jpg)
 
 
 ### 问题定位一般方法
-0. 当你遇到 `java.lang.NoClassDefFoundError` 等错误的时候, 如果是在 IDEA 里运行的, 很有可能是是 provided 依赖. 具体可以先看 IDEA 中打出的 classpath 里有没有依赖的包,![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/5.png), 然后看看 iml 里的 scope ![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/11871540974627_.pic_hd.jpg). 解决方法是 把 iml 里的都改成 compile 或者在 IDEA 中勾选上这个:
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/11861540974584_.pic.jpg)
+0. 当你遇到 `java.lang.NoClassDefFoundError` 等错误的时候, 如果是在 IDEA 里运行的, 很有可能是 provided 依赖. 具体可以先看 IDEA 中打出的 classpath 里有没有依赖的包,![](Maven-打包趟坑与解法/5.png)
 
-1. 如果有遇到什么 NoSuchMethodError, ClassNotFoundException 等等的, 先看看打印出来的 classpath. IDEA 里可以直接看:
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-11-8/76336665.jpg)
+1. 如果有遇到什么 NoSuchMethodError, ClassNotFoundException 等等的, 先看看打印出来的 classpath. IDEA 里可以直接看, ClassNotFoundException 是真的没有这个 class:
+![](Maven-打包趟坑与解法/76336665.jpg)
 
 2. 然后可以 double shift, 搜下出问题的类, 一般会跳出来多个:
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-11-8/65076854.jpg)
+![](Maven-打包趟坑与解法/65076854.jpg)
 
 3. 然后再用 `mvn dependency:tree` 看下当前 model 用的哪个版本的依赖
 
@@ -60,7 +59,7 @@ jar -tf 确认
 
 但是无论从`mvn dependency:tree`, 还是运行时加载的 jar 包来看, 都是用了正确的 `jackson-databind-2.6.5.jar`. 问题就刁钻在它用的这个类, 其实不是 `jackson-databind` 里的, 而是其他的包里 shaed 但是又没有 relocation 的. 除非你把这个包给从依赖李去掉, 在这个包的里面的依赖里去掉, 或者最外面加正确版本的`jackson-databind-2.6.5.jar`都是没有用的, 见下图:
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/18-9-14/40098244.jpg)
+![](Maven-打包趟坑与解法/40098244.jpg)
 
 所以画框里他 exclusive 也是没有用的. 解决方法就是我们做成 external 的, 并且 exclude 掉.
 

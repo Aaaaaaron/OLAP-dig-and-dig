@@ -3,6 +3,7 @@ title: Learning Parquet
 date: 2018-10-30 19:09:46
 tags: 
   - Parquet
+  - BigData
 ---
 # Glossary
 
@@ -20,11 +21,11 @@ tags:
 - IO - Column chunk
 - Encoding/Compression - Page
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/FileLayout.gif)
+![](Learning-Parquet/FileLayout.gif)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/FileFormat.gif)
+![](Learning-Parquet/FileFormat.gif)
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/Parquet%20%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F.png)
+![](Learning-Parquet/Parquet 文件格式.png)
 
 # Deep
 正是因为有 row group, 才使得 parquet 文件 splitable, 且每个 split 都有完整的 record(Spark 中也是根据 row group 来切 split 的). 

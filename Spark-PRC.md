@@ -119,7 +119,7 @@ private[spark] trait RpcEndpoint {
 
 在Akka中只要你持有了⼀个Actor的引⽤ ActorRef，那么你就可以使⽤此ActorRef向远端的Actor发起请求。 RpcEndpointRef也具有同等的效⽤，要向⼀个远端的RpcEndpoint发起请 求，你就必须持有这个RpcEndpoint的RpcEndpointRef。
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/20181219104726.png)
+![](Spark-PRC/20181219104726.png)
 
 ```scala
 /**
