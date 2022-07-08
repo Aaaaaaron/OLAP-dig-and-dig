@@ -2,6 +2,8 @@
 title: Linux 初养成
 date: 2019-01-05 10:32:31
 tags:
+  - Linux
+  - Tool
 ---
 # shell 基础知识
 ```sh
@@ -38,7 +40,7 @@ if  [ $sting ]                  如果string 非空，返回0 (和-n类似)
 
 ## snipaste
 
-```sh
+​```sh
 DIR="$( cd "$(dirname "$0")" ; pwd -P )"
 
 $0 类似于python中的sys.argv[0]等。 $0指的是Shell本身的文件名。类似的有如果运行脚本的时候带参数，那么$1 就是第一个参数，依此类推。 
@@ -160,7 +162,7 @@ rpm -e --nodeps xxx yyy zzz
 23. `find / -name zkCli.sh`: /opt/cloudera/parcels/CDH-5.11.2-1.cdh5.11.2.p0.4/lib/zookeeper/bin/zkCli.sh
 也可以在cdh的节点上, 直接 z 然后 tab, 会发现有 zookeeper-client 这样一个命令.
 
-![](https://aron-blog-1257818292.cos.ap-shanghai.myqcloud.com/WeChatWorkScreenshot_9994c078-2f8a-40e8-9659-165afcde065d(1).png)
+![](Linux-初养成/9994c078-2f8a-40e8-9659-165afcde065d(1).png)
 
 24. 找某个目录下是否有包含某各类的 jar 包: `grep -r "SparkSession" jars`
 ```shell
