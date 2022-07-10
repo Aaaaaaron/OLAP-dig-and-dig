@@ -209,10 +209,9 @@ tags:
 
       - PageBufferClient拉取到数据后会放到PageBuffer双端队列中, ExchangeClient从PageBuffer中读取数据
       ```java
-        ExchangeClient is the client on receiver side, used in operators requiring data exchange from other tasks,
-        such as ExchangeOperator and ink MergeOperator.
+        ExchangeClient is the client on receiver side, used in operators requiring data exchange from other tasks, such as ExchangeOperator and ink MergeOperator.
         For each sender that ExchangeClient receives data from, a {@link PageBufferClient} is used in ExchangeClient to communicate with the sender, i.e.
-        
+
                            /   HttpPageBufferClient_1  - - - Remote Source 1
             ExchangeClient --  HttpPageBufferClient_2  - - - Remote Source 2
                            \   ...
@@ -294,26 +293,23 @@ Optional<InternalNodeInfo> chooseLeastBusyNode(SplitWeight splitWeight, List<Int
         InternalNode node = candidateNodes.get(i);
         if (node.getNodeStatus() == DEAD) {
             // Node is down. Do not schedule split. Skip it.
-            if (preferredNodeCount.isPresent() && i < preferredNodeCount.getAsInt()) {
+            if (preferredNodeCount.isPresent() && i < preferredNodeCount.getAsInt())
                 nodeSelectionStats.incrementPreferredNonAliveNodeSkippedCount();
-            }
             continue;
         }
 
-        if (assignmentStats.getUnacknowledgedSplitCountForStage(node) >= maxUnacknowledgedSplitsPerTask) {
+        if (assignmentStats.getUnacknowledgedSplitCountForStage(node) >= maxUnacknowledgedSplitsPerTask)
             continue;
-        }
+        
         long currentWeight = splitWeightProvider.applyAsLong(node);
         boolean canAssignToNode = canAssignSplitBasedOnWeight(currentWeight, maxSplitsWeight, splitWeight);
 
         // choose the preferred node first as long as they're not busy
         if (preferredNodeCount.isPresent() && i < preferredNodeCount.getAsInt() && canAssignToNode) {
-            if (i == 0) {
+            if (i == 0) 
                 nodeSelectionStats.incrementPrimaryPreferredNodeSelectedCount();
-            }
-            else {
+            else 
                 nodeSelectionStats.incrementNonPrimaryPreferredNodeSelectedCount();
-            }
             return Optional.of(new InternalNodeInfo(node, true));
         }
         // fallback to choosing the least busy nodes
@@ -364,12 +360,12 @@ Optional<InternalNodeInfo> chooseLeastBusyNode(SplitWeight splitWeight, List<Int
   - `Fixed`: 随机选择参数`hash_partition_count`和`max_tasks_per_stage`两者的小值数量的节点 (`min(100, workerCount)`)
 
   ```java
-          if (partitioning == SystemPartitioning.COORDINATOR_ONLY)
-              nodes = ImmutableList.of(nodeSelector.selectCurrentNode());
-          else if (partitioning == SystemPartitioning.SINGLE)
-              nodes = nodeSelector.selectRandomNodes(1);
-          else if (partitioning == SystemPartitioning.FIXED)
-              nodes = nodeSelector.selectRandomNodes(min(getHashPartitionCount(session), getMaxTasksPerStage(session)));
+if (partitioning == SystemPartitioning.COORDINATOR_ONLY)
+    nodes = ImmutableList.of(nodeSelector.selectCurrentNode());
+else if (partitioning == SystemPartitioning.SINGLE)
+    nodes = nodeSelector.selectRandomNodes(1);
+else if (partitioning == SystemPartitioning.FIXED)
+    nodes = nodeSelector.selectRandomNodes(min(getHashPartitionCount(session), getMaxTasksPerStage(session)));
   ```
 
 #### 输入包含本地数据源(FixedSourcePartionedScheduler)
@@ -521,23 +517,17 @@ child.addOutputBuffers(newOutputBuffers, noMoreTasks);
 ```java
 public synchronized void setWithDelay(long maxRunNanos, ScheduledExecutorService executor)
 {
-    checkState(yieldFuture == null, "there is an ongoing yield");
-    checkState(!isSet(), "yield while driver was not running");
-
     this.runningSequence++;
     long expectedRunningSequence = this.runningSequence;
     yieldFuture = executor.schedule(() -> {
         synchronized (this) {
-            if (expectedRunningSequence == runningSequence && yieldFuture != null) {
+            if (expectedRunningSequence == runningSequence && yieldFuture != null)
                 yield.set(true);
-            }
         }
     }, maxRunNanos, NANOSECONDS);
 }
 
 ```
-
-
 
 当前这个Driver获取了1s的时间片, 就设置一个delay为一秒的Future, 即这个Future会在1s以后被调度, 把一个yield变量设置为true, 然后各个不同的Operator去自行check这个标记位, 以ScanFilterAndProjectOperator为例：
 
@@ -547,7 +537,6 @@ private Page processPageSource()
     DriverYieldSignal yieldSignal = operatorContext.getDriverContext().getYieldSignal();
     if (!finishing && mergingOutput.needsInput() && !yieldSignal.isSet()) {
         Page page = pageSource.getNextPage();
-    ...
 }
 ```
 
