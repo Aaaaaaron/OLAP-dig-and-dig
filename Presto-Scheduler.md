@@ -11,19 +11,19 @@ tags:
 
 ## 基本概念
 
-<img src="Presto 分享.assets/image-20220707105603799.png" alt="image-20220707105603799" style="zoom: 33%;" />
+<img src="image-20220707105603799.png" alt="image-20220707105603799" style="zoom: 33%;" />
 
 - **Stage**: 逻辑概念, 指可以在一个节点上执行的一部分执行计划, 对应一个 `PlanFragment`, 一般按照 exchange 来划分
 
-  <img src="Presto 分享.assets/stage.png" alt="img" style="zoom: 25%;" />
+  <img src="stage.png" alt="img" style="zoom: 25%;" />
 
-  <img src="Presto 分享.assets/stages.png" alt="img" style="zoom: 50%;" />
+  <img src="stages.png" alt="img" style="zoom: 50%;" />
 
 - **Task**: Stage 的实例, Stage只是定义了执行计划怎么划分, 接下来会被调度到各个机器上去执行, 每一个Stage 的实例就称为Task;  一个 Stage 分为一系列的 Task , 负责管理 Task 和封装建模, Stage 实际运行的是Task; Task 运行在各个具体节点上.
 
   - 一个Presto里的Worker只会运行一个Stage的一个实例. 当然它会跑多个Task, 但它们一般来说是属于不同的Stage的
   - ui 上每个Stage需要的Task数可以认为Worker数
-  - <img src="Presto 分享.assets/70.png" alt="Presto Task Overview" style="zoom:50%;" />
+  - <img src="70.png" alt="Presto Task Overview" style="zoom:50%;" />
 
 - **Pipeline**: 虚拟概念
   - Task 执行 stage(PlanFragment) 的逻辑, 就是执行一组 operator, 执行 operator 的最佳并行度可能是不同的, 比如说做Tablescan的并发可以很大, 但做Final Aggregation(如Sort)的并发度只能是一; 
@@ -32,7 +32,7 @@ tags:
   
   - driver 的数量就是 pipeline 的并行度
   
-    <img src="Presto 分享.assets/70-20220705214534972.png" alt="Presto Pipeline示例" style="zoom: 25%;" />
+    <img src="70-20220705214534972.png" alt="Presto Pipeline示例" style="zoom: 25%;" />
   
 - **Driver**: Pipeline其实是一个虚拟的概念, 它的实例就叫Driver; Task 被分解成一个或者多个 Driver, 并行执行多个 Driver 的方式来实现 Task 的并行执行. Driver 是作用于一个 Split 的一系列 Operator 的集合. 一个 Driver 处理一个 Split, 产生输出由 Task 收集并传递给下游的 Stage 中的一个 Task. 一个 Driver 拥有一个输入和输出. 
   - Pipeline 的实例是 Driver, 可以说Pipeline就是DriverFactory, 用来create Driver
@@ -52,7 +52,7 @@ tags:
 - Driver 是 Pipeline的实例, 并发度的最小单位
 - Split 是 Table的一个分片, 在Hive中可以对应HDFS文件的一个分片
 
-<img src="Presto 分享.assets/image-20220705204049997.png" alt="image-20220705204049997" style="zoom:50%;" />
+<img src="image-20220705204049997.png" alt="image-20220705204049997" style="zoom:50%;" />
 
 ## Coordinator 端 Scheduler
 
@@ -62,7 +62,7 @@ tags:
 - 资源组之间形成树形结构
 - query 可以绑定到任意节点
 
-<img src="Presto 分享.assets/v2-afa8246a036e408d437508518a530cf6_1440w.jpg" alt="img" style="zoom:60%;" />
+<img src="v2-afa8246a036e408d437508518a530cf6_1440w.jpg" alt="img" style="zoom:60%;" />
 
 #### 属性
 
@@ -162,7 +162,7 @@ tags:
 - 获取所有处于执行就绪状态(`isReadyForExecution`)的 `stage` 加入到待调度队列中;
 - 遍历待调度队列中的stage并应用运行时CBO优化其执行计划;
 - 为每个stage添加相应的执行策略(all-at-once/phased);
-  - All-at-once: 就是一次调度所有 stag 以最小化Wall Clock Time, 数据一旦可用就会被处理; 虽然是一次性调度, 但各个 stage 之间是有序的, 从叶子节点开始自底向上的去调度, 适用于延迟敏感的场景
+  - All-at-once: 就是一次调度所有 stage 以最小化 Wall Clock Time, 数据一旦可用就会被处理; 虽然是一次性调度, 但各个 stage 之间是有序的, 从叶子节点开始自底向上的去调度, 适用于延迟敏感的场景
   - Phased: 分阶段调度, 核心就是构建一个 DAG 图, 有依赖关系的子任务在图上加边; 典型操作如hash-join, 需要先build好, 再启动probe端, 在构建哈希表之前, 不会对左侧的流调度任务进行调度. 比较节约内存, 适用于批处理场景
 - 遍历待调度队列(`SqlStageExecution`)中的stage并进行调度执行一个 stage;
 - 调度`SqlStageExecution`时, 根据`StageExecutionAndScheduler`绑定的`StageScheduler`执行`StageScheduler#scheduler()`, 得到`ScheduleResult` 
@@ -187,7 +187,7 @@ tags:
 
   - `RemoteSplit` 本质就是一个用来标记数据位置的URL, Driver在执行到`ExchangeOperator`算子时, 通过该URL去拉取数据进行运算
 
-    <img src="Presto 分享.assets/fbd33c347193ba9f05a089719ec93212-20220710000334427.png" alt="image-20210401150903279" style="zoom: 33%;" />
+    <img src="fbd33c347193ba9f05a089719ec93212-20220710000334427.png" alt="image-20210401150903279" style="zoom: 33%;" />
 
 - Split的计算, Split的下发都有可能阻塞, 所以采用异步调用的方式
 
@@ -195,7 +195,7 @@ tags:
 
 在`SqlQueryScheduler#schedule` 方法中会为不同的stage创建不同的调度器(`SectionExecutionFactory#createStageScheduler`)
 
-<img src="Presto 分享.assets/image-20220706220355120.png" alt="image-20220706220355120" style="zoom: 33%;" />
+<img src="image-20220706220355120.png" alt="image-20220706220355120" style="zoom: 33%;" />
 
 - SourcePartitionedScheduler:叶子节点, 只读一张表
 - ScaledWriterScheduler:写数据节点
@@ -231,10 +231,10 @@ tags:
   - `scheduleSplits` 会调用 `scheduleTask`
   
   - `scheduleTask` 会调用 `createRemoteTask``
-  
+
   - remote  调用`HttpRemoteTask#start`
   
-    <img src="Presto 分享.assets/312753-20211116174351414-831233956-20220708225355357.png" alt="img" style="zoom:50%;" />
+    <img src="312753-20211116174351414-831233956-20220708225355357.png" alt="img" style="zoom:50%;" />
   
 - 有一个额外的操作即对数据Split进行调度, 给需要处理的split分配执行节点, 通过`splitPlacementPolicy.computeAssignments`方法为split分配节点
 
@@ -391,27 +391,27 @@ child.addOutputBuffers(newOutputBuffers, noMoreTasks);
 
   
 
-  <img src="Presto 分享.assets/image-20220707181420112.png" alt="image-20220707181420112" style="zoom:33%;" />
+  <img src="image-20220707181420112.png" alt="image-20220707181420112" style="zoom:33%;" />
 
-<img src="Presto 分享.assets/61990452-c5afec80-aff5-11e9-8a2a-bad34aa33593-20220706231808517.png" alt="Example 1" style="zoom:33%;" />
+<img src="61990452-c5afec80-aff5-11e9-8a2a-bad34aa33593-20220706231808517.png" alt="Example 1" style="zoom:33%;" />
 
-<img src="Presto 分享.assets/61990454-c9437380-aff5-11e9-8937-0aee5d2c3472-20220706231818347.png" alt="Example 2" style="zoom:33%;" />
+<img src="61990454-c9437380-aff5-11e9-8937-0aee5d2c3472-20220706231818347.png" alt="Example 2" style="zoom:33%;" />
 
 
 
-![img](Presto 分享.assets/922194103fad4d5f935fda6e200ef261.png)
+![img](922194103fad4d5f935fda6e200ef261.png)
 
-![img](Presto 分享.assets/d5bb4826efb54f2c859282e3f46cedd6.png)
+![img](d5bb4826efb54f2c859282e3f46cedd6.png)
 
 ##### StageScheduler
 
-![img](Presto 分享.assets/10ec79b499db493587e93e5e8b82297a-20220707111022724.png)
+![img](10ec79b499db493587e93e5e8b82297a-20220707111022724.png)
 
 ##### 总体流程
 
-![img](Presto 分享.assets/556bc2e66ee645e5acc41a4cfed9da74-20220707175915795.png)
+![img](556bc2e66ee645e5acc41a4cfed9da74-20220707175915795.png)
 
-![img](Presto 分享.assets/225f04d792f247d19c0525c106b5abfe.png)
+![img](225f04d792f247d19c0525c106b5abfe.png)
 
 
 
@@ -468,13 +468,13 @@ child.addOutputBuffers(newOutputBuffers, noMoreTasks);
 - Worker节点启动一定数目的线程进行计算(`TaskExecutor#runnerThreads`)，线程数``task.shard.max-threads= Runtime.getRuntime().availableProcessors() * 2`;
 - 每个空闲线程从队列中取出PrioritizedSplitRunner对象执行，每隔1秒，判断任务是否执行完成，如果完成，从allSplits队列中删除，如果没有，则放回pendingSplits队列
 
-<img src="Presto 分享.assets/image-20220708152209337.png" alt="image-20220708152209337" style="zoom:50%;" />
+<img src="image-20220708152209337.png" alt="image-20220708152209337" style="zoom:50%;" />
 
 1. finished splits： 意思是已经完全执行完毕的splits, 即这个split对应的driver的状态已经是finished的
 2. waiting splits: 等待分配时间片的split
 3. blocked splist: splits没有执行完, 但是时间片已经到了
 
-<img src="Presto 分享.assets/Split Lifecycle.jpeg" alt="canRunMore" style="zoom: 33%;" />
+<img src="Split Lifecycle.jpeg" alt="canRunMore" style="zoom: 33%;" />
 
 - 定时检查, 如果 OutputBuffers 使用率低于 0.5 (下游消费较快, 需要提高生产速度),  并发度+1`SplitConcurrencyController#TARGET_UTILIZATION`
   - 主要逻辑可以参考 `PrioritizedSplitRunner`
@@ -528,7 +528,7 @@ private Page processPageSource()
 
 `Source Stage`把数据从`Connector`中拉取出来, 会先把数据放在`OutputBuffer`中, 等待上游把数据请求过去, 而上游请求数据的类就是`ExchangeClient`
 
-![img](Presto 分享.assets/ExchangeClient.png)
+![img](ExchangeClient.png)
 
 ### 主体类
 
@@ -617,7 +617,7 @@ public class RemoteSplit implements ConnectorSplit
 
 #### OutputBuffer
 
-![img](Presto 分享.assets/SqlTask.png)
+![img](SqlTask.png)
 
 **LazyOutputBuffer**: 是一个门面模式, 包含了一个类别不同的OutputBuffe
 
@@ -639,7 +639,7 @@ public class RemoteSplit implements ConnectorSplit
 
 presto 模拟了`Tcp`中的`Seq`和`Ack`机制, 但是因为只有上游需要把数据传送给下游, 所以是半双工的, 保证了数据的可靠性
 
-![img](Presto 分享.assets/token.png)
+![img](token.png)
 
 ##### OutputBuffer流控
 
