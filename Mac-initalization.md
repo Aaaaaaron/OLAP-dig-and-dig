@@ -93,6 +93,7 @@ brew update && brew upgrade brew-cask && brew cleanup // 更新
 ### 脚本
 ```bash
 brew install --cask google-chrome
+# 买的 9 的, 现在 brew 会装最新版也就是 10, 同理 Alfread
 brew install --cask keyboard-maestro
 brew install --cask wechat
 # vim ~/Library/Application\ Support/.com.contextsformac.Contexts.plist
