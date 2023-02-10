@@ -43,21 +43,8 @@ xcode-select --install
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 brew doctor
 
-brew install git
+### 安装homebrew cask(已废弃, 现在直接装就行)
 
-brew install iterm2
-brew install alfred
-brew install appcleaner
-brew install cheatsheet
-brew install dropbox
-brew install google-chrome
-brew install onepassword
-brew install sublime-text
-brew install totalfinder
-brew install --cask keyboard-maestro
-htop
-node
-### 安装homebrew cask(已废弃, 现在直接转就行)
 ```shell
 brew tap homebrew/cask
 brew install brew-cask
@@ -92,6 +79,9 @@ brew update && brew upgrade brew-cask && brew cleanup // 更新
 
 ### 脚本
 ```bash
+brew install htop
+brew install node
+brew install --cask shiftit
 brew install --cask google-chrome
 # 买的 9 的, 现在 brew 会装最新版也就是 10, 同理 Alfread
 brew install --cask keyboard-maestro
@@ -122,3 +112,81 @@ brew install --cask fluid
 brew install --cask jd-gui
 brew install --cask projector
 ```
+
+配置快捷键
+
+<img src="./Mac-initalization/image-20221008145858555.png" alt="image-20221008145858555" style="zoom:50%;" />
+
+<img src="./Mac-initalization/image-20221008150107285.png" alt="image-20221008150107285" style="zoom:50%;" />
+
+### 配置定时任务
+
+举例 kinit
+1. 配置 kinit 自动输入密码 `kinit --keychain xxx@xxx`
+2. 编写脚本, 并且赋予可执行权限 
+
+```bash
+# kinit_crontab.sh
+/usr/bin/kinit --keychain xxx@xxx
+echo "done kinit"
+```
+
+3. 编写launchctl脚本
+
+- cd ~/Library/LaunchAgents
+- vim com.user.kinit.plist
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <!-- 一定以com 开头 -->
+    <string>com.user.kinit</string>
+    <key>Program</key>
+    <string>/Users/aron/kinit_crontab.sh</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/aron/kinit_crontab.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StartInterval</key>
+    <!-- 60s -->
+    <integer>60</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/aron/log/kinit_run.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/aron/log/kinit_run.err</string>
+</dict>
+</plist>
+
+```
+
+4. launchctl定时执行脚本
+
+```sh
+cd ~/Library/LaunchAgents
+launchctl load -w com.user.kinit.plist
+卸载脚本：launchctl unload com.user.kinit.plist
+```
+
+### 配置 gdb init
+
+`vim ~/.gdbinit`
+
+```py
+python
+import sys
+sys.path.insert(0, '~/gcc-10/share/gcc-10.2.0/python')
+# sys.path.insert(0, '~/gcc-9/share/gcc-9.3.0/python')
+from libstdcxx.v6.printers import register_libstdcxx_printers
+register_libstdcxx_printers (None)
+
+sys.path.insert(0, '~/clang/gdb')
+from libcxx.printers import register_libcxx_printer_loader
+register_libcxx_printer_loader()
+end
+```
+
