@@ -5,6 +5,15 @@ tags:
   - Linux
   - Tool
 ---
+# Grep
+- -i/--ignore-case   搜索时忽略大小写区分, grep -i 'hello world' menu.h main.c命令从两个文件中搜索hello world字符串。默认情况下grep会打印匹配的整行内容
+- -v, 反向选择
+- `ps aux |grep '~/ch-config/' | grep -v grep | awk '{print $2}' | xargs kill -9`
+- kill -9 `grep PID /data01/db/status | grep '\d+' -Po`
+- -a    --text  等价于 --binary-files=text ，将二进制文件当作文本文件处理
+- $ grep -Rn -i "current" *.sql | cut -d ":" -f 1 | sort | uniq | wc -l
+
+
 # Shell-snipaste
 
 1. `!$` : 代表上条命令的最后一个参数.

@@ -6,6 +6,219 @@ tags: Clickhouse
 
 # Clickhouse Aggregation 源码分析
 
+# 框架侧
+
+主要就是看 AggregateTransfom 的 prepare/work方法, 先来复习下 pipeline 的状态
+
+```cpp
+        /// Processor needs some data at its inputs to proceed.
+        /// You need to run another processor to generate required input and then call 'prepare' again.
+        NeedData,
+
+        /// Processor cannot proceed because output port is full or not isNeeded().
+        /// You need to transfer data from output port to the input port of another processor and then call 'prepare' again.
+        PortFull,
+
+        /// All work is done (all data is processed or all output are closed), nothing more to do.
+        Finished,
+
+        /// No one needs data on output ports.
+        /// Unneeded,
+
+        /// You may call 'work' method and processor will do some work synchronously.
+        Ready,
+
+        /// You may call 'schedule' method and processor will return descriptor.
+        /// You need to poll this descriptor and call work() afterwards.
+        Async,
+
+        /// Processor wants to add other processors to pipeline.
+        /// New processors must be obtained by expandPipeline() call.
+        ExpandPipeline,
+```
+
+看 ch 的 prepare, 最主要是关注 input 和 output, 简单来说就是啥时候从 input 拿, 啥时候往 output 放
+
+## prepare
+
+```cpp
+IProcessor::Status AggregatingTransform::prepare()
+{
+    /// There are one or two input ports.
+    /// The first one is used at aggregation step, the second one - while reading merged data from ConvertingAggregated
+
+    auto & output = outputs.front();
+    /// Last output is current. All other outputs should already be closed.
+    auto & input = inputs.back();
+
+    /// Check can output.
+    if (output.isFinished())
+    {
+        input.close();
+        return Status::Finished;
+    }
+
+    if (!output.canPush())
+    {
+        input.setNotNeeded();
+        return Status::PortFull;
+    }
+
+    /// Finish data processing, prepare to generating.
+    if (is_consume_finished && !is_generate_initialized)
+    {
+        /// Close input port in case max_rows_to_group_by was reached but not all data was read.
+        inputs.front().close();
+
+        return Status::Ready;
+    }
+
+    if (is_generate_initialized && !is_pipeline_created && !processors.empty())
+        return Status::ExpandPipeline;
+
+    /// Only possible while consuming.
+    if (read_current_chunk)
+        return Status::Ready;
+
+    /// Get chunk from input.
+    if (input.isFinished())
+    {
+        if (is_consume_finished)
+        {
+            output.finish();
+            return Status::Finished;
+        }
+        else
+        {
+            /// Finish data processing and create another pipe.
+            is_consume_finished = true;
+            return Status::Ready;
+        }
+    }
+
+    if (!input.hasData())
+    {
+        input.setNeeded();
+        return Status::NeedData;
+    }
+
+    if (is_consume_finished)
+        input.setNeeded();
+
+    current_chunk = input.pull(/*set_not_needed = */ !is_consume_finished);
+    read_current_chunk = true;
+
+    if (is_consume_finished)
+    {
+        output.push(std::move(current_chunk));
+        read_current_chunk = false;
+        return Status::PortFull;
+    }
+
+    return Status::Ready;
+}
+```
+
+`    if (is_consume_finished && !is_generate_initialized)`: 已经 consume 完, 但是还未 generate initialized,  返回 ready, 执行 work 的 `initGenerate` , 在 `initGenerate` 里会加上ConvertingAggregatedToChunksTransform: `processors.emplace_back(std::make_shared<ConvertingAggregatedToChunksTransform>(params, std::move(prepared_data_ptr), max_threads));`
+
+
+
+```
+if (is_generate_initialized && !is_pipeline_created && !processors.empty())
+	return Status::ExpandPipeline;
+```
+已经 consume 完, 但是还没有`expandPipeline`, 返回 ExpandPipeline, 注意这里会创建新的 processor 并且作为 input 连接到 agg transfrom, 具体可以看 `Processors AggregatingTransform::expandPipeline()`, **注意, 这里会切换 input, 把原来 agg 的输入切换成 ConvertingAggregatedToChunksTransform**
+
+
+
+```cpp
+/// Get chunk from input.
+if (input.isFinished())
+{
+    if (is_consume_finished)
+    {
+        output.finish();
+        return Status::Finished;
+    }
+    else
+    {
+        /// Finish data processing and create another pipe.
+        is_consume_finished = true;
+        return Status::Ready;
+    }
+}
+```
+
+当 input finish 的时候, 这时候有两种可能
+
+- consume 完成了, 这种时候代表 initGenerate, 所以这个 agg transform 也完成了
+- consume 没完成但是input 又没数据, 代表agg 已经消费完下游的数据了, 设置 is_consume_finished 为 true, 然后开始 initGenerate
+
+
+
+    if (is_consume_finished)
+        input.setNeeded();
+
+这里 input 已经切换成 ConvertingAggregatedToChunksTransform 了, 所以这里需要设置为 needed 让它把数据吐上来
+
+
+
+    current_chunk = input.pull(/*set_not_needed = */ !is_consume_finished);
+    read_current_chunk = true;
+    if (is_consume_finished)
+    {
+        output.push(std::move(current_chunk));
+        read_current_chunk = false;
+        return Status::PortFull;
+    }
+
+这里是拿到 ConvertingAggregatedToChunksTransform 吐回来的 chunk, 放到 output
+
+
+
+```
+if (many_data->num_finished.fetch_add(1) + 1 < many_data->variants.size())
+	return;
+```
+
+这里也是很重要的一个点, 这个方法在 `AggregatingTransform::initGenerate()` 中, 这个方法说明了当 agg 的所有并发没有全部完成前, 不能进行initGenerate, 这就等于给pipeline 加了一个堤坝, 会比较影响性能.
+
+## expandPipeline
+
+```cpp
+Processors AggregatingTransform::expandPipeline()
+{
+    if (processors.empty())
+        throw Exception(ErrorCodes::LOGICAL_ERROR, "Can not expandPipeline in AggregatingTransform. This is a bug.");
+    auto & out = processors.back()->getOutputs().front();
+    inputs.emplace_back(out.getHeader(), this);
+    connect(out, inputs.back());
+    is_pipeline_created = true;
+    return std::move(processors);
+}
+```
+
+把 processors 里的 processor 和 agg transform 的 input  connect
+
+## work
+
+```cpp
+void AggregatingTransform::work()
+{
+    if (is_consume_finished)
+        initGenerate();
+    else
+    {
+        consume(std::move(current_chunk));
+        read_current_chunk = false;
+    }
+}
+```
+
+下文详细说
+
+# 执行侧
+
 一个大体的数据流程也是重要问题: 
 
 - 列内存从哪里分配
@@ -171,14 +384,6 @@ struct AggregateFunctionSumData
 };
 ```
 
-
-
-
-
-
-
-
-
 ## 源码分析
 
 ### AggregatingTransform
@@ -204,37 +409,7 @@ struct AggregateFunctionSumData
 
 #### AggregatingTransform::work/prepare
 
-```cpp
-IProcessor::Status AggregatingTransform::prepare()
-{
-    ...
-    /// Finish data processing, prepare to generating.
-    if (is_consume_finished && !is_generate_initialized)
-    {
-        /// Close input port in case max_rows_to_group_by was reached but not all data was read.
-        inputs.front().close();
-
-        return Status::Ready;
-    }
-    if (is_generate_initialized && !is_pipeline_created && !processors.empty())
-        return Status::ExpandPipeline;
-
-    ...
-}
-```
-
-```cpp
-void AggregatingTransform::work()
-{
-    if (is_consume_finished)
-        initGenerate();
-    else
-    {
-        consume(std::move(current_chunk));
-        read_current_chunk = false;
-    }
-}
-```
+见上面章节, 不在赘述, 我们主要看看 work 里的两个方法 `consume`/`initGenerate`
 
 #### AggregatingTransform::consume
 
