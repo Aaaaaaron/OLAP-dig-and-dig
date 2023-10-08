@@ -68,6 +68,115 @@ Hybrid Hash Join 是 Grace Hash Join 的一种改进
 
 <img src="./grace-hash-join/image-20221031162135908.png" alt="image-20221031162135908" style="zoom:50%;" />
 
+# Clickhouse grace hash join
+
+1. 通过 addJoinedBlock 处理右表数据, 每个 input block 会根据 join 的keys 切分成成多个 buckets(分片个数由grace_hash_join_initial_buckets 决定), 第一个 bucket 会被加载到内存中, 剩下的 buckets 会写到磁盘上, 当内存超过限制的时候, 会把 bucket 数量翻倍, 类似ConcurrentHashJoin, addJoinedBlock是多线程调用的
+
+![right-side-grace.png](./grace-hash-join/right_side_grace_8054638766.png)
+
+1. 通过 joinBlock 处理左表数据, 和右表一样, 先切分成多个 buckets, 第一个 bucket 通过HashJoin::joinBlock 进行 in memroy join, 剩下的 bucket 进行刷盘
+
+![left-side-grace.png](./grace-hash-join/left_side_grace_c09fcd9258.png)
+
+1. 当最后一个线程读取完成左表的 block, 最后一个步骤开始, 每个DelayedJoinedBlocksTransform会被getDelayedBlocks重复调用直到没有剩余的没完成的 bucket 
+   1. 在 getDelayedBlocks 中, 我们会选择下一个没被处理的 bucket, 从磁盘加载右/左表数据, 然后进行 in-memory 的 hash join
+   2. 当 join 左表的 block 完成后, 我们可以从右表加载 non-joined rows, 当 join 是 RIGHT/FULL join
+   3. non-joined rows是多线程处理的
+   4. ![grace-final-step.png](./grace-hash-join/grace_final_step_8424107c1a.png)
+
+# 关键代码路径
+
+## 配置
+
+1. grace_hash_join_initial_buckets, 默认 1, 初始的 bucket 个数, 2 的次幂取值(roundUpToPowerOfTwoOrZero), 比如配置 3 实际上是 4
+2. grace_hash_join_max_buckets, 最大的 bucket num 个数, 默认 1024
+
+## 代码
+
+TBD
+
+# 官方数据
+
+![hash-join-results.png](./grace-hash-join/hash_join_results_ee7184297b.png)
+
+```Bash
+SELECT
+    query,
+    formatReadableTimeDelta(query_duration_ms / 1000) AS query_duration,
+    formatReadableSize(memory_usage) AS memory_usage,
+    formatReadableQuantity(read_rows) AS read_rows,
+    formatReadableSize(read_bytes) AS read_data
+FROM clusterAllReplicas(default, system.query_log)
+WHERE (type = 'QueryFinish') AND hasAll(tables, ['imdb_large.actors', 'imdb_large.roles'])
+ORDER BY initial_query_start_time DESC
+LIMIT 2
+FORMAT Vertical;
+
+Row 1:
+──────
+query:          SELECT *
+                FROM actors AS a
+                JOIN roles AS r ON a.id = r.actor_id
+                FORMAT `Null`
+                SETTINGS join_algorithm = 'grace_hash', grace_hash_join_initial_buckets = 3
+query_duration: 13 seconds
+memory_usage:   3.72 GiB
+read_rows:      101.00 million
+read_data:      3.41 GiB
+
+Row 2:
+──────
+query:          SELECT *
+                FROM actors AS a
+                JOIN roles AS r ON a.id = r.actor_id
+                FORMAT `Null`
+                SETTINGS join_algorithm = 'hash'
+query_duration: 5 seconds
+memory_usage:   8.96 GiB
+read_rows:      101.00 million
+read_data:      3.41 GiB
+```
+
+增大 grace_hash_join_initial_buckets
+
+```Bash
+SELECT
+    query,
+    formatReadableTimeDelta(query_duration_ms / 1000) AS query_duration,
+    formatReadableSize(memory_usage) AS memory_usage,
+    formatReadableQuantity(read_rows) AS read_rows,
+    formatReadableSize(read_bytes) AS read_data
+FROM clusterAllReplicas(default, system.query_log)
+WHERE (type = 'QueryFinish') AND hasAll(tables, ['imdb_large.actors', 'imdb_large.roles'])
+ORDER BY initial_query_start_time DESC
+LIMIT 2
+FORMAT Vertical;
+
+Row 1:
+──────
+query:          SELECT *
+                FROM actors AS a
+                JOIN roles AS r ON a.id = r.actor_id
+                FORMAT `Null`
+                SETTINGS join_algorithm = 'grace_hash', grace_hash_join_initial_buckets = 8
+query_duration: 16 seconds
+memory_usage:   2.10 GiB
+read_rows:      101.00 million
+read_data:      3.41 GiB
+
+Row 2:
+──────
+query:          SELECT *
+                FROM actors AS a
+                JOIN roles AS r ON a.id = r.actor_id
+                FORMAT `Null`
+                SETTINGS join_algorithm = 'grace_hash', grace_hash_join_initial_buckets = 3
+query_duration: 13 seconds
+memory_usage:   3.72 GiB
+read_rows:      101.00 million
+read_data:      3.41 GiB
+```
+
 # Clickhouse merge join
 
 CH 要把小表作为右表, 右表会构建 hash 表(之后优化器做好了应该也不需要)

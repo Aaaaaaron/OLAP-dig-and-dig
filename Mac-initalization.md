@@ -3,6 +3,12 @@ title: Mac initalization...
 date: 2022-09-17 18:18:16
 tags:
 ---
+### mac 基础设置
+0. 新建一个账户
+1. 改键盘键位
+2. 登录 Apple id
+3. 更改键盘功能键/修饰键
+4. 控制中心打开蓝牙
 ### 最重要的几个软件配置:
 - Oh-my-zsh/.zshrc
 - Sublime Text3
@@ -40,17 +46,8 @@ tags:
 xcode-select --install
 
 ### 安装包管理工具 Homebrew
-`/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-brew doctor
-
-### 安装homebrew cask(已废弃, 现在直接装就行)
-
-```shell
-brew tap homebrew/cask
-brew install brew-cask
-
-brew cask install google-chrome // 安装 Google 浏览器
-brew update && brew upgrade brew-cask && brew cleanup // 更新
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 ### 查看已安装软件
@@ -81,10 +78,14 @@ brew update && brew upgrade brew-cask && brew cleanup // 更新
 ```bash
 brew install htop
 brew install node
+# npm install -g hexo-cli
+# https://hexo.io/zh-cn/docs/
 brew install --cask shiftit
 brew install --cask google-chrome
 # 买的 9 的, 现在 brew 会装最新版也就是 10, 同理 Alfread
-brew install --cask keyboard-maestro
+# brew install --cask keyboard-maestro
+# brew install --cask alfred
+brew install --cask iterm2
 brew install --cask wechat
 # vim ~/Library/Application\ Support/.com.contextsformac.Contexts.plist
 brew install --cask contexts
@@ -110,7 +111,9 @@ brew install --cask pdf-expert
 brew install --cask sequel-pro
 brew install --cask fluid
 brew install --cask jd-gui
-brew install --cask projector
+brew install kubectl
+brew install wget
+brew install binutils
 ```
 
 配置快捷键
@@ -118,6 +121,18 @@ brew install --cask projector
 <img src="./Mac-initalization/image-20221008145858555.png" alt="image-20221008145858555" style="zoom:50%;" />
 
 <img src="./Mac-initalization/image-20221008150107285.png" alt="image-20221008150107285" style="zoom:50%;" />
+
+
+
+### 删除迁移助理的用户
+
+强迫症看着不爽
+
+1. 打开目录实用工具,删除的用户的用户名，接着点击左下角的“-”就可以删除了, 记得要鉴定下
+
+![img](./Mac-initalization/webp)
+
+2. 用户删了 但是个人目录还在, 而且 sudo 也删不掉, 有个简单方法是再创建一个普通同名用户, 然后把这个用户删了就 ok 了
 
 ### 配置定时任务
 
