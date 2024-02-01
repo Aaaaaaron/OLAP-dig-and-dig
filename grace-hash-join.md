@@ -93,7 +93,38 @@ Hybrid Hash Join 是 Grace Hash Join 的一种改进
 
 ## 代码
 
-TBD
+```
+/**
+ * Efficient and highly parallel implementation of external memory JOIN based on HashJoin.
+ * Supports most of the JOIN modes, except CROSS and ASOF.
+ *
+ * The joining algorithm consists of three stages:
+ *
+ * 1) During the first stage we accumulate blocks of the right table via @addBlockToJoin.
+ * Each input block is split into multiple buckets based on the hash of the row join keys.
+ * The first bucket is added to the in-memory HashJoin, and the remaining buckets are written to disk for further processing.
+ * When the size of HashJoin exceeds the limits, we double the number of buckets.
+ * There can be multiple threads calling addBlockToJoin, just like @ConcurrentHashJoin.
+ *
+ * 2) At the second stage we process left table blocks via @joinBlock.
+ * Again, each input block is split into multiple buckets by hash.
+ * The first bucket is joined in-memory via HashJoin::joinBlock, and the remaining buckets are written to the disk.
+ *
+ * 3) When the last thread reading left table block finishes, the last stage begins.
+ * Each @DelayedJoinedBlocksTransform calls repeatedly @getDelayedBlocks until there are no more unfinished buckets left.
+ * Inside @getDelayedBlocks we select the next unprocessed bucket, load right table blocks from disk into in-memory HashJoin,
+ * And then join them with left table blocks.
+ *
+ * After joining the left table blocks, we can load non-joined rows from the right table for RIGHT/FULL JOINs.
+ * Note that non-joined rows are processed in multiple threads, unlike HashJoin/ConcurrentHashJoin/MergeJoin.
+ */
+```
+
+
+
+
+
+
 
 # 官方数据
 
